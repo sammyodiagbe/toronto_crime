@@ -8,9 +8,14 @@ FEATURES = ["REPORT_DATE", "OCC_DATE", "REPORT_YEAR", "REPORT_MONTH", "REPORT_DO
 
 crime_data = crime_data[FEATURES]
 
+d_type = (crime_data.dtypes == 'object')
+
+print(d_type)
+
+object_cols = list(d_type[d_type].index)
 
 
 
-print(crime_data.head())
+print(object_cols)
 
 
