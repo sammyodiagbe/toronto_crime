@@ -14,11 +14,28 @@ FEATURES = ["REPORT_DATE", "OCC_DATE", "REPORT_YEAR", "REPORT_MONTH", "REPORT_DO
 crime_data = crime_data[FEATURES]
 
 
-plt.figure(figsize=(12, 6))
-crime_counts = crime_data['crime_type'].value_counts()
-seaborn.barplot(x=crime_counts.values, y=crime_counts.index)
-plt.title('Distribution of Crime Types')
-plt.xlabel('Number of Incidents')
+crime_data["OCC_DATE"] = pd.to_datetime(crime_data["OCC_DATE"])
+crime_data["OCC_YEAR"] = crime_data["OCC_DATE"].dt.year
+crime_data["OCC_MONTH"] = crime_data["OCC_DATE"].dt.month
+crime_data["OCC_DAY"] = crime_data["OCC_DATE"].dt.day
+crime_data["OCC_HOUR"] = crime_data["OCC_DATE"].dt.hour
+crime_data["OCC_DOW"] = crime_data["OCC_DATE"].dt.day_of_week
+
+
+
+# plt.figure(figsize=(12, 6))
+# crime_counts = crime_data['MCI_CATEGORY'].value_counts()
+# seaborn.barplot(x=crime_counts.values, y=crime_counts.index)
+# plt.title('Distribution of Crime Types')
+# plt.xlabel('Number of Incidents')
+# plt.show()
+
+yearly_crimes = crime_data.groupby('OCC_YEAR').size()
+plt.figure(figsize=(10, 6))
+yearly_crimes.plot(kind='line', marker='x')
+plt.title('Crime Trends Over Years')
+plt.xlabel('Year')
+plt.ylabel('Number of Crimes')
 plt.show()
 
 
