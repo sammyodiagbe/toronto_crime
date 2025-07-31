@@ -5,9 +5,13 @@ import seaborn as sns
 import folium
 from folium.plugins import MarkerCluster
 
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import mean_absolute_error, classification_report
+
 crime_data = pd.read_csv("./data/toronto_crime_data.csv")
 map_cord = [43.651070, -79.347015]
-
+model = RandomForestClassifier(n_estimators=100, random_state=42)
 crime_map = folium.Map(location=map_cord, zoom_start=12)
 color_map = {
     "Assault": "blue",
@@ -44,6 +48,26 @@ for long, lat, crime_type  in zip(crime_data['LONG_WGS84'],  crime_data['LAT_WGS
     ).add_to(crime_map)
 
 
+y_pred = crime_data["MCI_CATEGORY"]
+x = crime_data.drop(columns=["MCI_CATEGORY"])
+
+train_x, test_x, train_y, test_y = train_test_split(x, y_pred, test_size=0.2, random_state=42)
+
+
+model.fit(train_x, train_y)
+
+y_predictions = model.predict(test_x)
+
+mean_squared = mean_absolute_error(test_y, y_predictions)
+class_report = classification_report(test_y, y_predictions)
+
+print("Mean absolute error")
+print(mean_squared)
+
+
+
+
+
 
 # plt.figure(figsize=(12, 6))
 # crime_counts = crime_data['MCI_CATEGORY'].value_counts()
@@ -60,6 +84,6 @@ for long, lat, crime_type  in zip(crime_data['LONG_WGS84'],  crime_data['LAT_WGS
 # plt.ylabel('Number of Crimes')
 # plt.show()
 
-crime_map.save("./data/crime_map.html")
-print("Exported successfully")
+# crime_map.save("./data/crime_map.html")
+# print("Exported successfully")
 
