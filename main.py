@@ -3,7 +3,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import seaborn as sns
 import folium
-
+from folium.plugins import MarkerCluster
 
 crime_data = pd.read_csv("./data/toronto_crime_data.csv")
 map_cord = [43.651070, -79.347015]
@@ -17,6 +17,8 @@ color_map = {
     "Auto Theft": "darkred",
     # Add more if needed
 }
+
+marker_cluster = MarkerCluster().add_to(crime_map)
 
 crime_data.drop(columns=["OBJECTID", "EVENT_UNIQUE_ID", "x", "y", "OCC_DAY", "OCC_YEAR", "OCC_MONTH"], inplace=True)
 
