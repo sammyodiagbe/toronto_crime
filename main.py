@@ -7,7 +7,7 @@ from folium.plugins import MarkerCluster
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import mean_absolute_error, classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.preprocessing import LabelEncoder
 
 encoder = LabelEncoder()
@@ -16,6 +16,7 @@ crime_data = pd.read_csv("./data/toronto_crime_data.csv")
 map_cord = [43.651070, -79.347015]
 model = RandomForestClassifier(n_estimators=100, random_state=42)
 crime_map = folium.Map(location=map_cord, zoom_start=12)
+y_pred = crime_data["MCI_CATEGORY"]
 color_map = {
     "Assault": "blue",
     "Break and Enter": "green",
@@ -24,11 +25,21 @@ color_map = {
     "Auto Theft": "darkred",
     # Add more if needed
 }
+
+encoder.fit(y_pred)
+
 crime_data["OFFENCE"] = encoder.fit_transform(crime_data["OFFENCE"])
 crime_data["NEIGHBOURHOOD_158"] = encoder.fit_transform(crime_data["NEIGHBOURHOOD_158"])
 crime_data["NEIGHBOURHOOD_140"] = encoder.fit_transform(crime_data["NEIGHBOURHOOD_140"])
 crime_data["PREMISES_TYPE"] = encoder.fit_transform(crime_data["PREMISES_TYPE"])
 crime_data["MCI_CATEGORY"] = encoder.fit_transform(crime_data["MCI_CATEGORY"])
+
+
+# this maps the number to the actual text
+
+
+
+
 
 
 
@@ -64,7 +75,6 @@ crime_data.drop(columns=["OCC_DATE", "REPORT_DATE", "REPORT_MONTH"], inplace=Tru
 #     ).add_to(crime_map)
 
 
-y_pred = crime_data["MCI_CATEGORY"]
 x = crime_data.drop(columns=["MCI_CATEGORY"])
 
 
@@ -76,7 +86,9 @@ model.fit(train_x, train_y)
 
 y_predictions = model.predict(test_x)
 
+print('prediction')
 print(y_predictions)
+print("Checking")
 
 
 class_report = classification_report(test_y, y_predictions)
