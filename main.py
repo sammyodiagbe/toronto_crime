@@ -37,7 +37,7 @@ marker_cluster = MarkerCluster().add_to(crime_map)
 
 
 
-crime_data.drop(columns=["OBJECTID", "EVENT_UNIQUE_ID", "x", "y", "OCC_DAY", "OCC_YEAR", "OCC_MONTH", "OCC_DOW", "REPORT_DOW"], inplace=True)
+crime_data.drop(columns=["OBJECTID","DIVISION", "EVENT_UNIQUE_ID", "x", "y", "OCC_DAY", "OCC_YEAR", "OCC_MONTH", "OCC_DOW", "REPORT_DOW"], inplace=True)
 
 FEATURES = ["REPORT_DATE", "OCC_DATE", "REPORT_YEAR", "REPORT_MONTH", "REPORT_HOUR", "OCC_HOUR", "DIVISION", "LOCATION_TYPE", "PREMISES_TYPE", "UCR_CODE", "OFFENCE", "MCI_CATEGORY", "NEIGHBOURHOOD_158", "NEIGHBOURHOOD_140", "LONG_WGS84", "LAT_WGS84"]
 
