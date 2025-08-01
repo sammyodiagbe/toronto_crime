@@ -7,7 +7,7 @@ from folium.plugins import MarkerCluster
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import mean_absolute_error, classification_report
+from sklearn.metrics import mean_absolute_error, classification_report, confusion_matrix
 from sklearn.preprocessing import LabelEncoder
 
 encoder = LabelEncoder()
@@ -27,7 +27,8 @@ color_map = {
 crime_data["OFFENCE"] = encoder.fit_transform(crime_data["OFFENCE"])
 crime_data["NEIGHBOURHOOD_158"] = encoder.fit_transform(crime_data["NEIGHBOURHOOD_158"])
 crime_data["NEIGHBOURHOOD_140"] = encoder.fit_transform(crime_data["NEIGHBOURHOOD_140"])
-crime_data["PREMISE_TYPE"] = encoder.fit_transform(crime_data["PREMISE_TYPE"])
+crime_data["PREMISES_TYPE"] = encoder.fit_transform(crime_data["PREMISES_TYPE"])
+crime_data["MCI_CATEGORY"] = encoder.fit_transform(crime_data["MCI_CATEGORY"])
 
 
 
@@ -75,11 +76,16 @@ model.fit(train_x, train_y)
 
 y_predictions = model.predict(test_x)
 
-mean_squared = mean_absolute_error(test_y, y_predictions)
-class_report = classification_report(test_y, y_predictions)
+print(y_predictions)
 
-print("Mean absolute error")
-print(mean_squared)
+
+class_report = classification_report(test_y, y_predictions)
+confussion_mat = confusion_matrix(test_y, y_predictions)
+
+print("classification report")
+print(class_report)
+print("confussion matrix")
+print(confussion_mat)
 
 
 
