@@ -27,6 +27,7 @@ color_map = {
 crime_data["OFFENCE"] = encoder.fit_transform(crime_data["OFFENCE"])
 crime_data["NEIGHBOURHOOD_158"] = encoder.fit_transform(crime_data["NEIGHBOURHOOD_158"])
 crime_data["NEIGHBOURHOOD_140"] = encoder.fit_transform(crime_data["NEIGHBOURHOOD_140"])
+crime_data["PREMISE_TYPE"] = encoder.fit_transform(crime_data["PREMISE_TYPE"])
 
 
 
@@ -37,9 +38,9 @@ marker_cluster = MarkerCluster().add_to(crime_map)
 
 
 
-crime_data.drop(columns=["OBJECTID","DIVISION", "EVENT_UNIQUE_ID", "x", "y", "OCC_DAY", "OCC_YEAR", "OCC_MONTH", "OCC_DOW", "REPORT_DOW"], inplace=True)
+crime_data.drop(columns=["OBJECTID","DIVISION","LOCATION_TYPE", "EVENT_UNIQUE_ID", "x", "y", "OCC_DAY", "OCC_YEAR", "OCC_MONTH", "OCC_DOW", "REPORT_DOW"], inplace=True)
 
-FEATURES = ["REPORT_DATE", "OCC_DATE", "REPORT_YEAR", "REPORT_MONTH", "REPORT_HOUR", "OCC_HOUR", "DIVISION", "LOCATION_TYPE", "PREMISES_TYPE", "UCR_CODE", "OFFENCE", "MCI_CATEGORY", "NEIGHBOURHOOD_158", "NEIGHBOURHOOD_140", "LONG_WGS84", "LAT_WGS84"]
+FEATURES = ["REPORT_DATE", "OCC_DATE", "REPORT_YEAR", "REPORT_MONTH", "REPORT_HOUR", "OCC_HOUR", "PREMISES_TYPE", "UCR_CODE", "OFFENCE", "MCI_CATEGORY", "NEIGHBOURHOOD_158", "NEIGHBOURHOOD_140", "LONG_WGS84", "LAT_WGS84"]
 
 crime_data = crime_data[FEATURES]
 
