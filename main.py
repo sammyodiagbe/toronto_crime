@@ -91,7 +91,7 @@ y_predictions = model.predict(test_x)
 class_report = classification_report(test_y, y_predictions)
 confussion_mat = confusion_matrix(test_y, y_predictions)
 
-print("classification report")
+print("classification report data")
 print(class_report)
 print("confussion matrix")
 print(confussion_mat)
