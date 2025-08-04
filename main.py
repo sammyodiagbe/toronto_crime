@@ -85,9 +85,7 @@ model.fit(train_x, train_y)
 
 y_predictions = model.predict(test_x)
 
-print('prediction')
-print(y_predictions)
-print("Checking")
+
 
 
 class_report = classification_report(test_y, y_predictions)
@@ -97,6 +95,9 @@ print("classification report")
 print(class_report)
 print("confussion matrix")
 print(confussion_mat)
+
+
+
 
 
 
