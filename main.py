@@ -76,6 +76,8 @@ crime_data.drop(columns=["OCC_DATE", "REPORT_DATE", "REPORT_MONTH"], inplace=Tru
 
 x = crime_data.drop(columns=["MCI_CATEGORY"])
 
+print(x.head(10))
+
 
 
 train_x, test_x, train_y, test_y = train_test_split(x, y_pred, test_size=0.2, random_state=42)
