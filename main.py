@@ -9,6 +9,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.preprocessing import LabelEncoder
 
+
 encoder = LabelEncoder()
 
 crime_data = pd.read_csv("./data/toronto_crime_data.csv")
