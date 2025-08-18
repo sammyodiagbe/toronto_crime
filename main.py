@@ -1,127 +1,89 @@
-import pandas as pd 
-import matplotlib.pyplot as plt
-import seaborn as sns
-import folium
-from folium.plugins import MarkerCluster
-
+import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.impute import SimpleImputer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix
-from sklearn.preprocessing import LabelEncoder
 
-
-encoder = LabelEncoder()
-
+# --- Load ---
 crime_data = pd.read_csv("./data/toronto_crime_data.csv")
-map_cord = [43.651070, -79.347015]
-model = RandomForestClassifier(n_estimators=100, random_state=42)
-crime_map = folium.Map(location=map_cord, zoom_start=12)
-y_pred = crime_data["MCI_CATEGORY"]
-color_map = {
-    "Assault": "blue",
-    "Break and Enter": "green",
-    "Robbery": "purple",
-    "Theft Over": "orange",
-    "Auto Theft": "darkred",
-    # Add more if needed
-}
 
-encoder.fit(y_pred)
+# --- Light column pruning early (drop obvious IDs/geom extras you won’t use directly) ---
+cols_to_drop = [
+    "OBJECTID","EVENT_UNIQUE_ID","x","y","OCC_DOW","DIVISION","LOCATION_TYPE"
+]
+crime_data = crime_data.drop(columns=[c for c in cols_to_drop if c in crime_data.columns], errors="ignore")
 
-crime_data["OFFENCE"] = encoder.fit_transform(crime_data["OFFENCE"])
-crime_data["NEIGHBOURHOOD_158"] = encoder.fit_transform(crime_data["NEIGHBOURHOOD_158"])
-crime_data["NEIGHBOURHOOD_140"] = encoder.fit_transform(crime_data["NEIGHBOURHOOD_140"])
-crime_data["PREMISES_TYPE"] = encoder.fit_transform(crime_data["PREMISES_TYPE"])
-crime_data["MCI_CATEGORY"] = encoder.fit_transform(crime_data["MCI_CATEGORY"])
-
-
-# this maps the number to the actual text
-
-
-
-
-
-
-
-# crime_data.drop(["OFFENCE", "NEIGHBOURHOOD_158", "NEIGHBOURHOOD_140"], inplace=True)
-
-
-marker_cluster = MarkerCluster().add_to(crime_map)
-
-
-
-crime_data.drop(columns=["OBJECTID","DIVISION","LOCATION_TYPE", "EVENT_UNIQUE_ID", "x", "y", "OCC_DAY", "OCC_YEAR", "OCC_MONTH", "OCC_DOW", "REPORT_DOW"], inplace=True)
-
-FEATURES = ["REPORT_DATE", "OCC_DATE", "REPORT_YEAR", "REPORT_MONTH", "REPORT_HOUR", "OCC_HOUR", "PREMISES_TYPE", "UCR_CODE", "OFFENCE", "MCI_CATEGORY", "NEIGHBOURHOOD_158", "NEIGHBOURHOOD_140", "LONG_WGS84", "LAT_WGS84"]
-
-crime_data = crime_data[FEATURES]
-
-
-crime_data["OCC_DATE"] = pd.to_datetime(crime_data["OCC_DATE"])
-crime_data["OCC_YEAR"] = crime_data["OCC_DATE"].dt.year
+# --- Feature engineering from OCC_DATE ---
+crime_data["OCC_DATE"] = pd.to_datetime(crime_data["OCC_DATE"], errors="coerce")
+crime_data["OCC_YEAR"]  = crime_data["OCC_DATE"].dt.year
 crime_data["OCC_MONTH"] = crime_data["OCC_DATE"].dt.month
-crime_data["OCC_DAY"] = crime_data["OCC_DATE"].dt.day
-crime_data["OCC_HOUR"] = crime_data["OCC_DATE"].dt.hour
+crime_data["OCC_DAY"]   = crime_data["OCC_DATE"].dt.day
+crime_data["OCC_HOUR"]  = crime_data["OCC_DATE"].dt.hour
 
-crime_data.drop(columns=["OCC_DATE", "REPORT_DATE", "REPORT_MONTH"], inplace=True)
+# Optional: parse REPORT_DATE too if you want features from it
+# crime_data["REPORT_DATE"] = pd.to_datetime(crime_data["REPORT_DATE"], errors="coerce")
 
-# for long, lat, crime_type  in zip(crime_data['LONG_WGS84'],  crime_data['LAT_WGS84'], crime_data['MCI_CATEGORY']):
-#     folium.CircleMarker(
-#             location=[lat, long],
-#             radius=2,
-#             popup=f"{crime_type}",
-#             color=color_map.get(crime_type, "gray"),
-#             fill=True
-#     ).add_to(crime_map)
+# --- Target and features ---
+y = crime_data["MCI_CATEGORY"].copy()  # keep strings for readability & metrics output
 
+feature_cols = [
+    # numeric/time
+    "REPORT_YEAR","REPORT_HOUR","OCC_YEAR","OCC_MONTH","OCC_DAY","OCC_HOUR",
+    # numeric-ish
+    "UCR_CODE",
+    # categorical
+    "OFFENCE","PREMISES_TYPE","NEIGHBOURHOOD_158","NEIGHBOURHOOD_140",
+    # geo (numerical)
+    "LONG_WGS84","LAT_WGS84",
+]
+# keep only available columns
+feature_cols = [c for c in feature_cols if c in crime_data.columns]
+X = crime_data[feature_cols]
 
-x = crime_data.drop(columns=["MCI_CATEGORY"])
+# --- Column groups ---
+numeric_cols = [c for c in feature_cols if c in {"REPORT_YEAR","REPORT_HOUR","OCC_YEAR","OCC_MONTH","OCC_DAY","OCC_HOUR","UCR_CODE","LONG_WGS84","LAT_WGS84"}]
+cat_cols = [c for c in feature_cols if c not in numeric_cols]
 
-print(x.head(10))
+# --- Preprocess + model pipeline ---
+numeric_tf = Pipeline(steps=[
+    ("imputer", SimpleImputer(strategy="median")),
+])
 
+cat_tf = Pipeline(steps=[
+    ("imputer", SimpleImputer(strategy="most_frequent")),
+    ("onehot", OneHotEncoder(handle_unknown="ignore")),
+])
 
+preproc = ColumnTransformer(
+    transformers=[
+        ("num", numeric_tf, numeric_cols),
+        ("cat", cat_tf, cat_cols),
+    ]
+)
 
-train_x, test_x, train_y, test_y = train_test_split(x, y_pred, test_size=0.2, random_state=42)
+model = RandomForestClassifier(
+    n_estimators=300, random_state=42, n_jobs=-1, class_weight=None
+)
 
+clf = Pipeline(steps=[
+    ("preproc", preproc),
+    ("rf", model)
+])
 
-model.fit(train_x, train_y)
+# --- Split (stratify preserves class balance) ---
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
 
-y_predictions = model.predict(test_x)
+# --- Train ---
+clf.fit(X_train, y_train)
 
-
-
-
-class_report = classification_report(test_y, y_predictions)
-confussion_mat = confusion_matrix(test_y, y_predictions)
-
-print("classification report data")
-print(class_report)
-print("confussion matrix")
-print(confussion_mat)
-
-
-
-
-
-
-
-
-
-# plt.figure(figsize=(12, 6))
-# crime_counts = crime_data['MCI_CATEGORY'].value_counts()
-# seaborn.barplot(x=crime_counts.values, y=crime_counts.index)
-# plt.title('Distribution of Crime Types')
-# plt.xlabel('Number of Incidents')
-# plt.show()
-
-# yearly_crimes = crime_data.groupby('OCC_YEAR').size()
-# plt.figure(figsize=(10, 6))
-# yearly_crimes.plot(kind='line', marker='x')
-# plt.title('Crime Trends Over Years')
-# plt.xlabel('Year')
-# plt.ylabel('Number of Crimes')
-# plt.show()
-
-# crime_map.save("./data/crime_map.html")
-# print("Exported successfully")
-
+# --- Evaluate ---
+y_pred = clf.predict(X_test)
+print("classification report")
+print(classification_report(y_test, y_pred))
+print("confusion matrix")
+print(confusion_matrix(y_test, y_pred))
